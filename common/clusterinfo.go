@@ -6,11 +6,16 @@ type Cluster struct {
     // fit zabbix IP suffix
     IP          string
     // kube config path
-    kubecfg     string
+    Kubecfg     string
 }
 
 type ClusterInfo struct {
     set     map[string]*Cluster
+}
+
+func (ci *ClusterInfo) AddInfo(c *Cluster) (error) {
+    set[c.Name] = c
+    return nil
 }
 
 func (ci *ClusterInfo) GetInfo(name string) (*ClusterInfo, error) {

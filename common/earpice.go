@@ -8,29 +8,43 @@ import (
 )
 
 type Earpice struct {
-    kubeClient      *kubeClient.Clientset
+    kubeClients     map[string]*kubeClient.Clientset
     clusterInfo     *ClusterInfo
 }
 
 func NewEarpice(c *ClusterInfo) (*Earpice, error) {
-    if c == nil || c.Name == "" || c.kubecfg == "" {
+    if c == nil {
         return nil, fmt.Errorf("the cluster info is invalid")
     }
 
-    config, err := clientcmd.BuildConfigFromFlags("", c.kubecfg)
-    if err != nil {
-        return nil, err
-    }
-
-    clientset, err := kubernetes.NewForConfig(config)
-    if err != nil {
-        return nil, err
-    }
-
     return &Earpice{
-        kubeClient:     clientset,
-        clusterInfo:    c,
+        clusterInfo: c,
     }, nil
+}
+
+func (ep *Earpice) GetClientset(name string) (*kubeClient.Clientset, error) {
+    c, ok := ep.kubeClients[name]
+    if ok {
+        return c
+    }
+
+    cInfo, err := ep.clusterInfo.GetInfo(name)
+    if err != nil {
+        return nil, err
+    }
+
+    config, err := clientcmd.BuildConfigFromFlags("", cInfo.kubecfg)
+    if err != nil {
+        return nil, err
+    }
+
+    c, err = kubernetes.NewForConfig(config)
+    if err != nil {
+        return nil, err
+    }
+
+    ep.kubeClients[name] = c
+    return c, nil
 }
 
 func (ep *Earpice) Call(ops *Options) (error) {
@@ -45,11 +59,13 @@ func (ep *Earpice) Call(ops *Options) (error) {
         err = ep.discoveryNode(ops.Args...)
     case "discovery_pod":
         err = ep.discoveryPod(ops.Args...)
+    case "discovery_cs":
+        err = ep.discoveryComponentstatuses(ops.Args...)
 
     case "ev":
         err = ep.clusterEvent(ops.Args...)
-    case "cl_cs":
-        err = ep.clusterComponentstatuses(ops.Args...)
+    case "cs":
+        err = ep.componentstatuses(ops.Args...)
     case "pod":
         err = ep.pod(ops.Args...)
     case "no":
