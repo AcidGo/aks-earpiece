@@ -9,21 +9,21 @@ import (
 )
 
 type zbxDiscovery struct {
-    data    []map[interface{}]interface{}
+    data    []map[string]interface{}
 }
 
 func newZbxDiscovery() (*zbxDiscovery) {
     return &zbxDiscovery{
-        data: make([]map[interface{}]interface{}, 0),
+        data: make([]map[string]interface{}, 0),
     }
 }
 
-func (zd *zbxDiscovery) addItem(m map[interface{}]interface{}) {
+func (zd *zbxDiscovery) addItem(m map[string]interface{}) {
     zd.data = append(zd.data, m)
 }
 
 func (zd *zbxDiscovery) fmt() (string, error) {
-    data := make(map[interface{}]interface{})
+    data := make(map[string]interface{})
     data["data"] = zd.data
 
     b, err := json.Marshal(data)
@@ -38,42 +38,10 @@ func (ep *Earpiece) discoveryCluster(args ...string) (error) {
     zd := newZbxDiscovery()
 
     for _, val := range ep.clusterInfo.ListInfo() {
-        zd.addItem(map[interface{}]interface{}{
+        zd.addItem(map[string]interface{}{
             "{#CLUSTER}": val.Name,
             "{#IP}": val.IP,
         })
-    }
-
-    res, err := zd.fmt()
-    if err != nil {
-        return err
-    }
-
-    fmt.Print(res)
-
-    return nil
-}
-
-func (ep *Earpiece) discoveryNamespace(args ...string) (error) {
-    zd := newZbxDiscovery()
-
-    for _, val := range ep.clusterInfo.ListInfo() {
-        clientset, err := ep.GetClientset(val.Name)
-        if err != nil {
-            continue
-        }
-
-        nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-        if err != nil {
-            continue
-        }
-
-        for _, n := range nodes.Items {
-            zd.addItem(map[interface{}]interface{}{
-                "{#CLUSTER}": val.Name,
-                "{#NODE}": n.Name,
-            })
-        }
     }
 
     res, err := zd.fmt()
@@ -95,13 +63,45 @@ func (ep *Earpiece) discoveryNode(args ...string) (error) {
             continue
         }
 
+        nodes, err := clientset.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
+        if err != nil {
+            continue
+        }
+
+        for _, n := range nodes.Items {
+            zd.addItem(map[string]interface{}{
+                "{#CLUSTER}": val.Name,
+                "{#NODE}": n.Name,
+            })
+        }
+    }
+
+    res, err := zd.fmt()
+    if err != nil {
+        return err
+    }
+
+    fmt.Print(res)
+
+    return nil
+}
+
+func (ep *Earpiece) discoveryNamespace(args ...string) (error) {
+    zd := newZbxDiscovery()
+
+    for _, val := range ep.clusterInfo.ListInfo() {
+        clientset, err := ep.GetClientset(val.Name)
+        if err != nil {
+            continue
+        }
+
         namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
         if err != nil {
             continue
         }
 
         for _, n := range namespaces.Items {
-            zd.addItem(map[interface{}]interface{}{
+            zd.addItem(map[string]interface{}{
                 "{#CLUSTER}": val.Name,
                 "{#NAMESPACE}": n.Name,
                 "{#IP}": val.IP,
@@ -145,7 +145,7 @@ func (ep *Earpiece) discoveryPod(args ...string) (error) {
     }
 
     for _, pod := range pods.Items {
-        zd.addItem(map[interface{}]interface{}{
+        zd.addItem(map[string]interface{}{
             "{#POD}": pod.Name,
         })
     }
@@ -185,7 +185,7 @@ func (ep *Earpiece) discoveryComponentstatuses(args ...string) (error) {
     }
 
     for _, cs := range css.Items {
-        zd.addItem(map[interface{}]interface{}{
+        zd.addItem(map[string]interface{}{
             "{#CLUSTER}": clusterName,
             "{#CS}": cs.Name,
         })

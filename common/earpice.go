@@ -18,6 +18,7 @@ func NewEarpice(c *ClusterInfo) (*Earpiece, error) {
     }
 
     return &Earpiece{
+        kubeClients: make(map[string]*kubernetes.Clientset),
         clusterInfo: c,
     }, nil
 }

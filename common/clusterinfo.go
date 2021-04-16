@@ -17,6 +17,12 @@ type ClusterInfo struct {
     set     map[string]*Cluster
 }
 
+func NewClusterInfo() (*ClusterInfo, error) {
+    return &ClusterInfo{
+        set: make(map[string]*Cluster),
+    }, nil
+}
+
 func (ci *ClusterInfo) AddInfo(c *Cluster) (error) {
     ci.set[c.Name] = c
     return nil

@@ -28,12 +28,26 @@ func init() {
         log.Fatal("the args is emtpy")
     }
 
-    ops = &common.Options{
-        Method:     flag.Arg(0),
-        Args:       flag.Args(),
+    var args []string
+    if len(flag.Args()) == 1 {
+        args = make([]string, 0)
+    } else {
+        args = flag.Args()[1:]
     }
 
-    cInfo = &common.ClusterInfo{}
+    ops = &common.Options{
+        Method:     flag.Arg(0),
+        Args:       args,
+    }
+}
+
+func main() {
+    var err error
+
+    cInfo, err = common.NewClusterInfo()
+    if err != nil {
+        log.Fatal(err)
+    }
 
     cfg, err := ini.Load(cfgPath)
     if err != nil {
@@ -41,6 +55,10 @@ func init() {
     }
 
     for _, sec := range cfg.Sections() {
+        if sec.Name() == ini.DEFAULT_SECTION {
+            continue
+        }
+
         clusterName     := sec.Name()
         clusterIP       := sec.Key(KEY_CLUSTER_IP).String()
         clusterKubecfg  := sec.Key(KEY_CLUSTER_KUBECFG).String()
@@ -55,10 +73,6 @@ func init() {
             log.Fatal(err)
         }
     }
-}
-
-func main() {
-    var err error
 
     earpiece, err = common.NewEarpice(cInfo)
     if err != nil {
