@@ -7,25 +7,25 @@ import (
     "k8s.io/client-go/tools/clientcmd"
 )
 
-type Earpice struct {
-    kubeClients     map[string]*kubeClient.Clientset
+type Earpiece struct {
+    kubeClients     map[string]*kubernetes.Clientset
     clusterInfo     *ClusterInfo
 }
 
-func NewEarpice(c *ClusterInfo) (*Earpice, error) {
+func NewEarpice(c *ClusterInfo) (*Earpiece, error) {
     if c == nil {
         return nil, fmt.Errorf("the cluster info is invalid")
     }
 
-    return &Earpice{
+    return &Earpiece{
         clusterInfo: c,
     }, nil
 }
 
-func (ep *Earpice) GetClientset(name string) (*kubeClient.Clientset, error) {
+func (ep *Earpiece) GetClientset(name string) (*kubernetes.Clientset, error) {
     c, ok := ep.kubeClients[name]
     if ok {
-        return c
+        return c, nil
     }
 
     cInfo, err := ep.clusterInfo.GetInfo(name)
@@ -33,7 +33,7 @@ func (ep *Earpice) GetClientset(name string) (*kubeClient.Clientset, error) {
         return nil, err
     }
 
-    config, err := clientcmd.BuildConfigFromFlags("", cInfo.kubecfg)
+    config, err := clientcmd.BuildConfigFromFlags("", cInfo.Kubecfg)
     if err != nil {
         return nil, err
     }
@@ -47,7 +47,7 @@ func (ep *Earpice) GetClientset(name string) (*kubeClient.Clientset, error) {
     return c, nil
 }
 
-func (ep *Earpice) Call(ops *Options) (error) {
+func (ep *Earpiece) Call(ops *Options) (error) {
     var err error
 
     switch ops.Method {
@@ -62,18 +62,20 @@ func (ep *Earpice) Call(ops *Options) (error) {
     case "discovery_cs":
         err = ep.discoveryComponentstatuses(ops.Args...)
 
-    case "ev":
-        err = ep.clusterEvent(ops.Args...)
+    // case "ev":
+    //     err = ep.clusterEvent(ops.Args...)
     case "cs":
         err = ep.componentstatuses(ops.Args...)
-    case "pod":
-        err = ep.pod(ops.Args...)
-    case "no":
-        err = ep.node(ops.Args...)
+    // case "pod":
+    //     err = ep.pod(ops.Args...)
+    // case "no":
+    //     err = ep.node(ops.Args...)
 
     }
 
     if err != nil {
         return err
     }
+
+    return nil
 }

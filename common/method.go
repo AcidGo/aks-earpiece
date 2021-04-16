@@ -1,8 +1,11 @@
 package common
 
 import (
-    "endcoding/json"
+    "context"
+    "encoding/json"
     "fmt"
+
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type zbxDiscovery struct {
@@ -11,7 +14,7 @@ type zbxDiscovery struct {
 
 func newZbxDiscovery() (*zbxDiscovery) {
     return &zbxDiscovery{
-        data: make([]map[interface{}]interface{}),
+        data: make([]map[interface{}]interface{}, 0),
     }
 }
 
@@ -22,10 +25,16 @@ func (zd *zbxDiscovery) addItem(m map[interface{}]interface{}) {
 func (zd *zbxDiscovery) fmt() (string, error) {
     data := make(map[interface{}]interface{})
     data["data"] = zd.data
-    return json.Marshal(data)
+
+    b, err := json.Marshal(data)
+    if err != nil {
+        return "", err
+    }
+
+    return string(b), nil
 }
 
-func (ep *Earpice) discoveryCluster(args ...string) (error) {
+func (ep *Earpiece) discoveryCluster(args ...string) (error) {
     zd := newZbxDiscovery()
 
     for _, val := range ep.clusterInfo.ListInfo() {
@@ -41,9 +50,11 @@ func (ep *Earpice) discoveryCluster(args ...string) (error) {
     }
 
     fmt.Print(res)
+
+    return nil
 }
 
-func (ep *Earpice) discoveryNamespace(args ...string) (error) {
+func (ep *Earpiece) discoveryNamespace(args ...string) (error) {
     zd := newZbxDiscovery()
 
     for _, val := range ep.clusterInfo.ListInfo() {
@@ -71,9 +82,11 @@ func (ep *Earpice) discoveryNamespace(args ...string) (error) {
     }
 
     fmt.Print(res)
+
+    return nil
 }
 
-func (ep *Earpice) discoveryNode(args ...string) (error) {
+func (ep *Earpiece) discoveryNode(args ...string) (error) {
     zd := newZbxDiscovery()
 
     for _, val := range ep.clusterInfo.ListInfo() {
@@ -102,9 +115,11 @@ func (ep *Earpice) discoveryNode(args ...string) (error) {
     }
 
     fmt.Print(res)
+
+    return nil
 }
 
-func (ep *Earpice) discoveryPod(args ...string) (error) {
+func (ep *Earpiece) discoveryPod(args ...string) (error) {
     if len(args) < 2 {
         return fmt.Errorf("must input [cluster, namespace] in args")
     }
@@ -141,9 +156,11 @@ func (ep *Earpice) discoveryPod(args ...string) (error) {
     }
 
     fmt.Print(res)
+
+    return nil
 }
 
-func (ep *Earpice) discoveryComponentstatuses(args ...string) (error) {
+func (ep *Earpiece) discoveryComponentstatuses(args ...string) (error) {
     if len(args) < 1 {
         return fmt.Errorf("must input [cluster] in args")
     }
@@ -173,9 +190,11 @@ func (ep *Earpice) discoveryComponentstatuses(args ...string) (error) {
             "{#CS}": cs.Name,
         })
     }
+
+    return nil
 }
 
-func (ep *Earpice) componentstatuses(args ...string) (error) {
+func (ep *Earpiece) componentstatuses(args ...string) (error) {
     if len(args) < 2 {
         return fmt.Errorf("must input [cluster, cs] in args")
     }
@@ -193,14 +212,14 @@ func (ep *Earpice) componentstatuses(args ...string) (error) {
         return err
     }
 
-    cs, err := clientset.CoreV1().ComponentStatuses().Get(context.TODO(), csName, metav1.ListOptions{})
+    cs, err := clientset.CoreV1().ComponentStatuses().Get(context.TODO(), csName, metav1.GetOptions{})
     if err != nil {
         return err
     }
 
     m := make(map[string]string)
 
-    m["status"] = cs.Conditions[len(cs.Conditions)-1].Type
+    m["status"] = string(cs.Conditions[len(cs.Conditions)-1].Type)
     m["error"] = cs.Conditions[len(cs.Conditions)-1].Error
 
     res, err := json.Marshal(m)
@@ -209,4 +228,6 @@ func (ep *Earpice) componentstatuses(args ...string) (error) {
     }
 
     fmt.Print(res)
+
+    return nil
 }

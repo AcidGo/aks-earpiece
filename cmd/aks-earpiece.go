@@ -2,24 +2,36 @@ package main
 
 import (
     "flag"
+    "log"
 
     "github.com/AcidGo/aks-earpiece/common"
+    "gopkg.in/ini.v1"
 )
 
 const (
-    KEY_CLUSTER_IP          "ip"
-    KEY_CLUSTER_KUBECFG     "kubecfg"
+    KEY_CLUSTER_IP          = "ip"
+    KEY_CLUSTER_KUBECFG     = "kubecfg"
 )
 
 var (
     earpiece    *common.Earpiece
     cInfo       *common.ClusterInfo
+    ops         *common.Options
     cfgPath     string
 )
 
 func init() {
     flag.StringVar(&cfgPath, "f", "aks-earpiece.ini", "cluster info configure file path")
     flag.Parse()
+
+    if len(flag.Args()) < 1 {
+        log.Fatal("the args is emtpy")
+    }
+
+    ops = &common.Options{
+        Method:     flag.Arg(0),
+        Args:       flag.Args(),
+    }
 
     cInfo = &common.ClusterInfo{}
 
@@ -43,13 +55,17 @@ func init() {
             log.Fatal(err)
         }
     }
+}
+
+func main() {
+    var err error
 
     earpiece, err = common.NewEarpice(cInfo)
     if err != nil {
         log.Fatal(err)
     }
 
-    err = earpiece.Call(...flag.Args())
+    err = earpiece.Call(ops)
     if err != nil {
         log.Fatal(err)
     }

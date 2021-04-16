@@ -1,5 +1,9 @@
 package common
 
+import (
+    "fmt"
+)
+
 type Cluster struct {
     // custom cluster name
     Name        string
@@ -14,11 +18,11 @@ type ClusterInfo struct {
 }
 
 func (ci *ClusterInfo) AddInfo(c *Cluster) (error) {
-    set[c.Name] = c
+    ci.set[c.Name] = c
     return nil
 }
 
-func (ci *ClusterInfo) GetInfo(name string) (*ClusterInfo, error) {
+func (ci *ClusterInfo) GetInfo(name string) (*Cluster, error) {
     c, ok := ci.set[name]
     if !ok {
         return nil, fmt.Errorf("not found the cluster %s", name)
@@ -27,8 +31,8 @@ func (ci *ClusterInfo) GetInfo(name string) (*ClusterInfo, error) {
     return c, nil
 }
 
-func (ci *ClusterInfo) ListInfo() ([]*ClusterInfo) {
-    res := make([]*ClusterInfo, len(ci.set))
+func (ci *ClusterInfo) ListInfo() ([]*Cluster) {
+    res := make([]*Cluster, len(ci.set))
     idx := 0
     for _, val := range ci.set {
         res[idx] = val
