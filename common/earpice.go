@@ -64,7 +64,7 @@ func (ep *Earpiece) Call(ops *Options) (error) {
         err = ep.discoveryComponentstatuses(ops.Args...)
 
     // case "ev":
-    //     err = ep.clusterEvent(ops.Args...)
+    //     err = ep.events(ops.Args...)
     case "cs":
         err = ep.componentstatuses(ops.Args...)
     case "pod":
